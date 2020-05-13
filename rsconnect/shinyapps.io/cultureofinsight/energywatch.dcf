@@ -1,0 +1,13 @@
+name: energywatch
+title: energywatch
+username:
+account: cultureofinsight
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2278975
+bundleId: 3131217
+url: https://cultureofinsight.shinyapps.io/energywatch/
+when: 1589191499.99918
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .gitattributes|.RData|README.md|preparation

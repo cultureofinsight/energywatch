@@ -41,7 +41,7 @@ ui <- pagePiling(
     img = "wind_turbines.jpg",
     tags$a(tags$img(src = "strapline.png", width = "250px"),href = "https://www.cultureofinsight.com/", target = "_blank", style = "color:white"),
     tags$br(),tags$br(),tags$br(),
-    h1("UK Energy Consumption", style = "color: black; font-size: 66px;"),
+    h1("UK Energy Consumption", style = "color: #42526C; font-size: 66px;"),
     tags$br(),tags$br(),tags$br(),tags$br(),tags$br(),tags$br(),tags$br(),
     tags$br(),tags$br(),tags$br(),tags$br(),
     h4("With the news that in April 2020 the UK broke its record for the number of days without coal power contributing to national energy use,", 
@@ -67,7 +67,8 @@ ui <- pagePiling(
           p("In 2019 it accounted for only 2% of UK output, behind Gas at 39%, and Nuclear and Wind power 
             both on 19%. The Government plans to phase out Coal power 
             entirely by 2025", style = "text-align:left;"),
-          p("You can interact with the chart: hover over for tooltips and export data with the menu top right.",
+          p("You can interact with the chart: hover over for tooltips and export data with the menu top right.
+            Click and drag to zoom dates.",
           style = "text-align:left; color:#636363")),
         column(7,highchartOutput("heatmap")),
         column(1)
@@ -90,7 +91,7 @@ ui <- pagePiling(
                  and Ireland which can send energy in either direction.",
                  style = "text-align:left;"),
                p("You can interact with the chart: hide or show data series by
-                 clicking on the legend, and export data with the menu top right.",
+                 clicking on the legend, and export data with the menu top right. Click and drag to zoom dates.",
                  style = "text-align:left; color:#636363")),
         column(7,highchartOutput("renewables")),
         column(1)
@@ -134,7 +135,8 @@ ui <- pagePiling(
                p("Weekends also stand out in the data, with energy usage 
                  around 20% lower than weekdays at the same time of year.", 
                  style = "text-align:left;"),
-               p("You can interact with the chart: hover over data for tooltips, and export data with the menu top right.",
+               p("You can interact with the chart: hover over data for tooltips, and export data with the menu top right.
+                 Click and drag to zoom dates.",
                  style = "text-align:left; color:#636363")),
         column(7,highchartOutput("days2019")),
         column(1)
@@ -275,10 +277,15 @@ ui <- pagePiling(
   pageSection(
     menu = "p10",
     pageContainer(
-      h1("About this tool"),
+      h1("Present your data differently"),
+      h3("Next time you have data that needs to make an impression, consider an",
+         tags$a(href = "https://www.cultureofinsight.com/","app", target = "_blank"),
+         "instead of the usual PowerPoint", style = "color: #42526C"),
+      tags$br(),
       p("This app was built by", tags$a(href = "https://www.cultureofinsight.com/","Culture of Insight", target = "_blank"), 
         "using",tags$a(href = "https://shiny.rstudio.com/","R Shiny", target = "_blank"),
         "and the", tags$a(href = "https://github.com/RinteRface/fullPage","fullPage API", target = "_blank"), "from John Coene"),
+      tags$br(),
       p("Data for these analyses come largely from the excellent", 
         tags$a(href = "https://www.gridwatch.templar.co.uk/","Gridwatch", target = "_blank"),
         "which has collated data on UK energy sources and consumption on a quarter-hourly basis since 2011"),
@@ -298,40 +305,6 @@ ui <- pagePiling(
 
 server <- function(input, output){
   
-  output$clean <- renderHighchart({
-    
-    hchart(dirty, "column", hcaes(x = year, y = value, group = type), 
-           stacking = T, backgroundColor = "#deebf7") %>% 
-      hc_xAxis(title = list(text = "Year"), tickInterval = 1) %>% 
-      hc_legend(layout= 'horizontal', backgroundColor= 'rgb(0,0,0,0)',
-                align= 'left', verticalAlign= 'top',
-                floating= TRUE, x= 90, y= 45, reversed = TRUE)%>% 
-      hc_title(text = "Energy Production & Emissions") %>% 
-      hc_yAxis_multiples(
-        list(lineWidth = 0, title = list(text = "UK Electricity Demand / Supply GW")),
-        list(opposite = TRUE, min = 0,
-             title = list(text = "C02 Emissions from Energy Production (Tonnes M)"))
-      ) %>% 
-      hc_add_series(data = dirty2, type = "line", hcaes(x = year, y = demand), name = "energy demand",
-                    marker = list(enabled = F)) %>%
-      hc_add_series(data = dirty3, type = "line", hcaes(x = year, y = emissions), name = "C02 emissions", 
-                    marker = list(enabled = F), yAxis = 1) %>%
-      # hc_add_theme(hc_theme_smpl()) %>% 
-      hc_exporting(enabled = TRUE, 
-                   buttons = list(contextButton = list(menuItems = download_btns, text = "Download")),
-                                                sourceWidth = 1000, sourceHeight = 600,
-                                                csv = list(dateFormat = "%d/%m/%y"), fallbackToExportServer = FALSE,
-                                                tableCaption = "UK Electricity Demand / Supply GW",
-                                                filename = paste0("CultureofInsight_", Sys.Date()),
-                                                chartOptions = list(chart = list(style = list(fontFamily = "Roboto")),
-                                                                    title = list(style = list(fontFamily = "Roboto Condensed")),
-                                                                    subtitle = list(text = "", style = list(fontFamily = "Roboto")),
-                                                                    plotOptions = list(series = list(dataLabels = list(enabled = TRUE, format="{point.y:,.0f}")))
-                                                )
-      )
-    
-  })
-  
   output$heatmap <- renderHighchart({
     
     flow <- flowchart %>% 
@@ -346,11 +319,15 @@ server <- function(input, output){
       hc_colorAxis(stops = color_stops(25, rev(magma(25)))) %>%
       hc_tooltip(formatter = fntltp) %>%
       hc_title(text = "UK power sources") %>%
+      hc_subtitle(text = "Monthly contribution from each power source, in GW (millions)") %>% 
       hc_legend(layout = "vertical", verticalAlign = "top",
                 align = "right", valueDecimals = 0,
                 y= 45) %>%
-      # hc_add_theme(hc_theme_smpl()) %>% 
+      hc_xAxis(title = list(text = "Month/Year"),
+               tickLength = 0) %>%
       hc_yAxis(reversed = T) %>% 
+      hc_chart(zoomType = "x") %>% 
+      hc_size(height = 800) %>% 
       hc_exporting(enabled = TRUE, 
                    buttons = list(contextButton = list(menuItems = download_btns, text = "Download")),
                    sourceWidth = 1000, sourceHeight = 600,
@@ -371,19 +348,79 @@ server <- function(input, output){
            stacking = T, pointPadding = 0, groupPadding = 0) %>% #
       hc_yAxis(labels = list(
         formatter = JS("function(){ return Math.abs(this.value) / 1000000 + 'M'; }")
-      ), title = list(text = "GW Contribution")) %>%
+      ), title = list(text = "GW Contribution"),
+      plotLines = list(list(value = 0, color = "red", dashStyle = "solid", width = 2, zIndex = 5))) %>%
       hc_xAxis(title = list(text = "Month/Year")) %>%
       hc_title(text = "Growth of Renewable Energy") %>%
+      hc_chart(zoomType = "x") %>% 
+      hc_subtitle(text = "Monthly contribution from each power source; renewables above the axis, non-renewables below") %>% 
       hc_legend(layout= 'horizontal', backgroundColor= 'rgb(0,0,0,0)',
                 align= 'left', verticalAlign= 'top',
                 floating= TRUE, x= 90, y= 45) %>%
       hc_colors(c("#1b9e77","#d95f02","#7570b3","#e7298a","#66a61e","#e6ab02","#a6761d","#666666")) %>%
-      # hc_add_theme(hc_theme_smpl())%>% 
       hc_exporting(enabled = TRUE, 
                    buttons = list(contextButton = list(menuItems = download_btns, text = "Download")),
                    sourceWidth = 1000, sourceHeight = 600,
                    csv = list(dateFormat = "%d/%m/%y"), fallbackToExportServer = FALSE,
                    tableCaption = "Growth of Renewable Energy",
+                   filename = paste0("CultureofInsight_", Sys.Date()),
+                   chartOptions = list(chart = list(style = list(fontFamily = "Roboto")),
+                                       title = list(style = list(fontFamily = "Roboto Condensed")),
+                                       subtitle = list(text = "", style = list(fontFamily = "Roboto")),
+                                       plotOptions = list(series = list(dataLabels = list(enabled = TRUE, format="{point.y:,.0f}")))
+                   )
+      )
+    
+  })
+  
+  output$clean <- renderHighchart({
+    
+    hchart(dirty, "column", hcaes(x = year, y = value, group = type), 
+           stacking = T, backgroundColor = "#deebf7") %>% 
+      hc_xAxis(title = list(text = "Year"), tickInterval = 1) %>% 
+      hc_legend(layout= 'horizontal', backgroundColor= 'rgb(0,0,0,0)',
+                align= 'left', verticalAlign= 'top',
+                floating= TRUE, x= 90, y= 45, reversed = TRUE)%>% 
+      hc_title(text = "Energy Production & Emissions") %>% 
+      hc_subtitle(text = "Yearly energy production from burnt fuels, overlaid with total demand and CO2 emissions") %>% 
+      hc_yAxis_multiples(
+        list(lineWidth = 0, title = list(text = "UK Electricity Demand / Supply GW")),
+        list(opposite = TRUE, min = 0,
+             title = list(text = "C02 Emissions from Energy Production (Tonnes M)"))
+      ) %>% 
+      hc_add_series(data = dirty2, type = "line", hcaes(x = year, y = demand), name = "energy demand",
+                    marker = list(enabled = F)) %>%
+      hc_add_series(data = dirty3, type = "line", hcaes(x = year, y = emissions), name = "C02 emissions", 
+                    marker = list(enabled = F), yAxis = 1) %>%
+      # hc_add_theme(hc_theme_smpl()) %>% 
+      hc_exporting(enabled = TRUE, 
+                   buttons = list(contextButton = list(menuItems = download_btns, text = "Download")),
+                   sourceWidth = 1000, sourceHeight = 600,
+                   csv = list(dateFormat = "%d/%m/%y"), fallbackToExportServer = FALSE,
+                   tableCaption = "UK Electricity Demand / Supply GW",
+                   filename = paste0("CultureofInsight_", Sys.Date()),
+                   chartOptions = list(chart = list(style = list(fontFamily = "Roboto")),
+                                       title = list(style = list(fontFamily = "Roboto Condensed")),
+                                       subtitle = list(text = "", style = list(fontFamily = "Roboto")),
+                                       plotOptions = list(series = list(dataLabels = list(enabled = TRUE, format="{point.y:,.0f}")))
+                   )
+      )
+    
+  })
+  
+  output$days2019 <- renderHighchart({
+    
+    hchart(dayrange, "column", hcaes(x = date, y = demand, color = demand)) %>% 
+      hc_xAxis(title = list(text = "Date"), tickInterval = 1) %>%
+      hc_title(text = "Energy Demand by Day, 2019") %>%
+      hc_yAxis(title = list(text = "UK Electricity Demand GW")) %>%
+      hc_chart(zoomType = "x") %>% 
+      # hc_add_theme(hc_theme_smpl())%>% 
+      hc_exporting(enabled = TRUE, 
+                   buttons = list(contextButton = list(menuItems = download_btns, text = "Download")),
+                   sourceWidth = 1000, sourceHeight = 600,
+                   csv = list(dateFormat = "%d/%m/%y"), fallbackToExportServer = FALSE,
+                   tableCaption = "Energy Demand by Day, 2019",
                    filename = paste0("CultureofInsight_", Sys.Date()),
                    chartOptions = list(chart = list(style = list(fontFamily = "Roboto")),
                                        title = list(style = list(fontFamily = "Roboto Condensed")),
@@ -433,28 +470,6 @@ server <- function(input, output){
                    sourceWidth = 1000, sourceHeight = 600,
                    csv = list(dateFormat = "%d/%m/%y"), fallbackToExportServer = FALSE,
                    tableCaption = "Renewable Sources by Season",
-                   filename = paste0("CultureofInsight_", Sys.Date()),
-                   chartOptions = list(chart = list(style = list(fontFamily = "Roboto")),
-                                       title = list(style = list(fontFamily = "Roboto Condensed")),
-                                       subtitle = list(text = "", style = list(fontFamily = "Roboto")),
-                                       plotOptions = list(series = list(dataLabels = list(enabled = TRUE, format="{point.y:,.0f}")))
-                   )
-      )
-    
-  })
-  
-  output$days2019 <- renderHighchart({
-    
-    hchart(dayrange, "column", hcaes(x = date, y = demand, color = demand)) %>% 
-      hc_xAxis(title = list(text = "Date"), tickInterval = 1) %>%
-      hc_title(text = "Energy Demand by Day, 2019") %>%
-      hc_yAxis(title = list(text = "UK Electricity Demand GW")) %>%
-      # hc_add_theme(hc_theme_smpl())%>% 
-      hc_exporting(enabled = TRUE, 
-                   buttons = list(contextButton = list(menuItems = download_btns, text = "Download")),
-                   sourceWidth = 1000, sourceHeight = 600,
-                   csv = list(dateFormat = "%d/%m/%y"), fallbackToExportServer = FALSE,
-                   tableCaption = "Energy Demand by Day, 2019",
                    filename = paste0("CultureofInsight_", Sys.Date()),
                    chartOptions = list(chart = list(style = list(fontFamily = "Roboto")),
                                        title = list(style = list(fontFamily = "Roboto Condensed")),
